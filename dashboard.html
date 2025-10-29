@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rotcod Admin Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body { font-family: Arial, sans-serif; margin: 20px; }
+h1,h2 { color: #1e40af; }
+table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+th { background: #1e40af; color: white; }
+button { padding: 5px 10px; margin: 5px; background: #1e40af; color: white; border: none; cursor: pointer; }
+input { padding: 5px; margin: 5px; }
+.chart-container { width: 100%; max-width: 900px; margin-top: 30px; }
+</style>
+</head>
+<body>
+<h1>Rotcod Admin Dashboard</h1>
+<h2 id="floatBalance">Float Balance: $0.00</h2>
+
+<input type="text" id="searchInput" placeholder="Search by name or phone">
+<button onclick="exportCSV()">Export CSV</button>
+
+<table id="transactionsTable">
+  <thead>
+    <tr>
+      <th>Transaction ID</th>
+      <th>Customer</th>
+      <th>Phone</th>
+      <th>Bundle</th>
+      <th>Price</th>
+      <th>Fee</th>
+      <th>Profit</th>
+      <th>Time</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<div class="chart-container">
+  <canvas id="cumulativeChart"></canvas>
+</div>
+
+<script>
+let cumulativeChart;
+
+async function loadTransactions() {
+  const res = await fetch("http://127.0.0.1:5000/api/transactions");
+  const data = await res.json();
+  const tableBody = document.querySelector("#transactionsTable tbody");
+  tableBody.innerHTML = "";
+
+  let labels = [];
+  let cumulativeSales = [];
+  let cumulativeProfit = [];
+  let runningSales = 0;
+  let runningProfit = 0;
+
+  data.forEach((tx, index) => {
+    const priceNum = parseFloat(tx.price.replace("$",""));
+    runningSales += priceNum;
+    runningProfit += tx.profit;
+
+    labels.push(`Tx ${index+1}`);
+    cumulativeSales.push(runningSales);
+    cumulativeProfit.push(runningProfit);
+
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${tx.transactionID}</td>
+      <td>${tx.customerName}</td>
+      <td>${tx.phone}</td>
+      <td>${tx.bundleName}</td>
+      <td>${tx.price}</td>
+      <td>$${tx.fee.toFixed(2)}</td>
+      <td>$${tx.profit.toFixed(2)}</td>
+      <td>${tx.time}</td>
+    `;
+    tableBody.appendChild(row);
+  });
+
+  // Update cumulative chart
+  if (!cumulativeChart) {
+    const ctx = document.getElementById("cumulativeChart").getContext("2d");
+    cumulativeChart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [
+          { label: "Cumulative Sales ($)", data: cumulativeSales, borderColor: "#38bdf8", backgroundColor: "rgba(56,189,248,0.2)", fill: true, tension: 0.3 },
+          { label: "Cumulative Profit ($)", data: cumulativeProfit, borderColor: "#16a34a", backgroundColor: "rgba(22,163,74,0.2)", fill: true, tension: 0.3 }
+        ]
+      },
+      options: { responsive: true, plugins: { legend: { display: true } } }
+    });
+  } else {
+    cumulativeChart.data.labels = labels;
+    cumulativeChart.data.datasets[0].data = cumulativeSales;
+    cumulativeChart.data.datasets[1].data = cumulativeProfit;
+    cumulativeChart.update();
+  }
+}
+
+async function loadFloat() {
+  const res = await fetch("http://127.0.0.1:5000/api/float");
+  const data = await res.json();
+  document.getElementById("floatBalance").innerText = `Float Balance: $${data.float.toFixed(2)}`;
+}
+
+function exportCSV() {
+  window.location.href = "http://127.0.0.1:5000/api/export";
+}
+
+// Search filter
+document.getElementById("searchInput").addEventListener("input", function() {
+  const term = this.value.toLowerCase();
+  document.querySelectorAll("#transactionsTable tbody tr").forEach(row => {
+    const name = row.cells[1].innerText.toLowerCase();
+    const phone = row.cells[2].innerText.toLowerCase();
+    row.style.display = (name.includes(term) || phone.includes(term)) ? "" : "none";
+  });
+});
+
+// Auto-refresh
+async function refreshDashboard() {
+  await loadTransactions();
+  await loadFloat();
+}
+setInterval(refreshDashboard, 5000);
+
+refreshDashboard();
+</script>
+</body>
+</html> 

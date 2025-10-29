@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Rotcod Admin Login</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="login-container">
+    <h2>🔐 Rotcod Admin Login</h2>
+    <input type="text" id="username" placeholder="Username" />
+    <input type="password" id="password" placeholder="Password" />
+    <button onclick="login()">Login</button>
+    <p id="error" style="color: red;"></p>
+  </div>
+
+  <script>
+    function login() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const errorMsg = document.getElementById("error");
+
+      if (username === "admin" && password === "rotcod123") {
+        // Save session
+        localStorage.setItem("loggedIn", "true");
+        window.location.href = "dashboard.html"; // redirect to dashboard
+      } else {
+        errorMsg.textContent = "❌ Invalid username or password!";
+      }
+    }
+  </script>
+</body>
+</html>

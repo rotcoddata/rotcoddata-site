@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rotcod Transactions</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>📒 Transaction History</h1>
+  <table border="1" cellpadding="10">
+    <thead>
+      <tr>
+        <th>Bundle Name</th>
+        <th>Price</th>
+        <th>Fee (10%)</th>
+        <th>Profit</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody id="transactionsBody"></tbody>
+  </table>
+
+  <script>
+    async function loadTransactions() {
+      const res = await fetch("http://127.0.0.1:5000/api/transactions");
+      const data = await res.json();
+      const body = document.getElementById("transactionsBody");
+      body.innerHTML = "";
+      data.forEach(t => {
+        const row = `
+          <tr>
+            <td>${t.bundleName}</td>
+            <td>${t.price}</td>
+            <td>$${t.fee.toFixed(2)}</td>
+            <td>$${t.profit.toFixed(2)}</td>
+            <td>${t.time}</td>
+          </tr>
+        `;
+        body.innerHTML += row;
+      });
+    }
+    loadTransactions();
+  </script>
+</body>
+</html>

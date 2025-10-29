@@ -16,7 +16,6 @@
   .bundle-item button { background: #1e40af; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-top: 10px; }
   .bundle-item button:hover { background: #2563eb; }
   footer { text-align: center; padding: 15px; background: #1e40af; color: white; margin-top: 30px; }
-  /* Popup styling */
   .popup { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
   .popup-content { background: white; padding: 20px; border-radius: 10px; text-align: center; width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
   .popup-content button { margin-top: 15px; background: #1e40af; color: white; padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; }
@@ -76,49 +75,52 @@
     });
   }
 
-  // Load bundles from backend
+  // Load bundles from Render backend
   async function loadBundles() {
-    const res = await fetch("http://127.0.0.1:5000/api/bundles");
-    const data = await res.json();
-    const container = document.getElementById("bundleList");
-    container.innerHTML = "";
-    data.forEach(b => {
-      const item = document.createElement("div");
-      item.className = "bundle-item";
-      item.innerHTML = `
-        <h3>${b.name}</h3>
-        <p>Price: ${b.price}</p>
-        <p>Data: ${b.data}</p>
-        <button onclick="buyBundle('${b.name}', '${b.price}')">💳 Buy Now</button>
-      `;
-      container.appendChild(item);
-    });
+    try {
+      const res = await fetch("https://rotcod-backend.onrender.com/api/bundles");
+      const data = await res.json();
+      const container = document.getElementById("bundleList");
+      container.innerHTML = "";
+      data.forEach(b => {
+        const item = document.createElement("div");
+        item.className = "bundle-item";
+        item.innerHTML = `
+          <h3>${b.name}</h3>
+          <p>Price: ${b.price} KES</p>
+          <p>Duration: ${b.duration}</p>
+          <button onclick="buyBundle('${b.name}', '${b.price}')">💳 Buy Now</button>
+        `;
+        container.appendChild(item);
+      });
+    } catch (error) {
+      console.error("Failed to load bundles:", error);
+      document.getElementById("bundleList").innerHTML = "<p style='color:red;'>Failed to load bundles. Try again later.</p>";
+    }
   }
 
-  // Buy bundle triggers M-Pesa popup
+  // Buy bundle triggers popup
   function buyBundle(bundleName, price) {
     showMPesaPopup(bundleName, price);
   }
 
-  // M-Pesa simulation with receipt
+  // Popup Simulation
   function showMPesaPopup(bundleName, price) {
     const popup = document.getElementById("mpesaPopup");
     const message = popup.querySelector(".message");
-    message.innerHTML = `Processing payment for ${bundleName} <br>••••`;
+    message.innerHTML = `Processing payment for ${bundleName}...`;
     popup.style.display = "flex";
 
     setTimeout(() => {
       const txId = Date.now();
       message.innerHTML = `
-        ✅ Thank you for buying Rotcod Data Bundle!<br>
+        ✅ Payment successful!<br>
         Bundle: ${bundleName}<br>
-        Price: ${price}<br>
+        Price: ${price} KES<br>
         Transaction ID: ${txId}<br>
-        Timestamp: ${new Date().toLocaleString()}<br>
-        Stay connected with Rotcod!
+        ${new Date().toLocaleString()}
       `;
-      // Send transaction to backend
-      fetch("http://127.0.0.1:5000/api/buy", {
+      fetch("https://rotcod-backend.onrender.com/api/buy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ bundleName, price, fee: 0, profit: 0 })

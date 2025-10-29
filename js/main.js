@@ -1,50 +1,46 @@
-// ✅ Your live backend URL on Render
-const BACKEND_URL = "https://rotcod-backend.onrender.com";
+// ✅ Rotcod Data Frontend Connection Script
 
-// Load bundles
-async function loadBundles() {
+const API_BASE_URL = "https://rotcod-backend.onrender.com"; // Your backend URL
+
+// Example: Fetch data bundles
+async function getBundles() {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/bundles`);
-    const data = await res.json();
+    const response = await fetch(`${API_BASE_URL}/api/bundles`);
+    const data = await response.json();
+    console.log("Available Bundles:", data);
 
-    const container = document.getElementById("bundleList");
-    container.innerHTML = "";
-
-    data.forEach(b => {
-      const item = document.createElement("div");
-      item.className = "bundle-item";
-      item.innerHTML = `
-        <h3>${b.name}</h3>
-        <p>Price: ${b.price}</p>
-        <p>Data: ${b.data}</p>
-        <button onclick="buyBundle('${b.name}', '${b.price}')">💳 Buy Now</button>
-      `;
-      container.appendChild(item);
-    });
-  } catch (err) {
-    console.error("Error loading bundles:", err);
-    alert("❌ Unable to load data bundles. Please try again later.");
+    const container = document.getElementById("bundles-container");
+    if (container) {
+      container.innerHTML = data
+        .map(
+          (bundle) => `
+          <div class="bundle-card">
+            <h3>${bundle.name}</h3>
+            <p>${bundle.price} KES</p>
+          </div>
+        `
+        )
+        .join("");
+    }
+  } catch (error) {
+    console.error("Error fetching bundles:", error);
   }
 }
 
-// Buy bundles
-async function buyBundle(bundleName, price) {
-  const confirmBuy = confirm(`Buy ${bundleName} for ${price}?`);
-  if (!confirmBuy) return;
-
+// Example: Send a contact message
+async function sendMessage(name, email, message) {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/buy`, {
+    const res = await fetch(`${API_BASE_URL}/api/contact`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bundleName, price })
+      body: JSON.stringify({ name, email, message }),
     });
-
-    const data = await res.json();
-    alert(`🎉 Thank you for buying Rotcod Data Bundle!\n\n${data.message}`);
-  } catch (err) {
-    console.error("Error buying bundle:", err);
-    alert("❌ Purchase failed. Please try again.");
+    const result = await res.json();
+    console.log("Message sent:", result);
+  } catch (error) {
+    console.error("Failed to send message:", error);
   }
 }
 
-loadBundles();
+// Auto-load bundles when site opens
+document.addEventListener("DOMContentLoaded", getBundles);

@@ -1,46 +1,61 @@
-// ✅ Rotcod Data Frontend Connection Script
+// ✅ Set your live backend URL here
+const BACKEND_URL = "https://rotcod-backend.onrender.com";
 
-const API_BASE_URL = "https://rotcod-backend.onrender.com"; // Your backend URL
-
-// Example: Fetch data bundles
-async function getBundles() {
+// ✅ Load bundles from backend
+async function loadBundles() {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/bundles`);
-    const data = await response.json();
-    console.log("Available Bundles:", data);
+    const res = await fetch(`${BACKEND_URL}/api/bundles`);
+    if (!res.ok) throw new Error("Failed to fetch bundles");
 
-    const container = document.getElementById("bundles-container");
-    if (container) {
-      container.innerHTML = data
-        .map(
-          (bundle) => `
-          <div class="bundle-card">
-            <h3>${bundle.name}</h3>
-            <p>${bundle.price} KES</p>
-          </div>
-        `
-        )
-        .join("");
+    const data = await res.json();
+    const container = document.getElementById("bundleList");
+
+    if (!container) {
+      console.error("❌ bundleList element not found in HTML");
+      return;
     }
-  } catch (error) {
-    console.error("Error fetching bundles:", error);
+
+    container.innerHTML = "";
+
+    if (data.length === 0) {
+      container.innerHTML = "<p>No bundles available right now.</p>";
+      return;
+    }
+
+    data.forEach((b) => {
+      const item = document.createElement("div");
+      item.className = "bundle-item";
+      item.innerHTML = `
+        <h3>${b.name}</h3>
+        <p>💰 Price: Ksh ${b.price}</p>
+        <p>⏳ Duration: ${b.duration}</p>
+        <button onclick="buyBundle('${b.name}', '${b.price}')">💳 Buy Now</button>
+      `;
+      container.appendChild(item);
+    });
+  } catch (err) {
+    console.error("❌ Error loading bundles:", err);
   }
 }
 
-// Example: Send a contact message
-async function sendMessage(name, email, message) {
+// ✅ Simulated Buy Function
+async function buyBundle(bundleName, price) {
+  const confirmBuy = confirm(`Buy ${bundleName} for Ksh ${price}?`);
+  if (!confirmBuy) return;
+
   try {
-    const res = await fetch(`${API_BASE_URL}/api/contact`, {
+    const res = await fetch(`${BACKEND_URL}/api/buy`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, message }),
+      body: JSON.stringify({ bundleName, price }),
     });
-    const result = await res.json();
-    console.log("Message sent:", result);
-  } catch (error) {
-    console.error("Failed to send message:", error);
+
+    const data = await res.json();
+    alert(`🎉 Thank you for buying ${bundleName}!\n\n${data.message || "Transaction successful."}`);
+  } catch (err) {
+    alert("❌ Failed to process your purchase.");
   }
 }
 
-// Auto-load bundles when site opens
-document.addEventListener("DOMContentLoaded", getBundles);
+// ✅ Initialize when page loads
+document.addEventListener("DOMContentLoaded", loadBundles);

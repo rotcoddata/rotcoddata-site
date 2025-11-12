@@ -13,6 +13,7 @@
     table { width: 100%; border-collapse: collapse; background: white; }
     th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
     th { background: #1e40af; color: white; }
+    #loading { text-align: center; padding: 10px; color: gray; }
   </style>
 </head>
 <body>
@@ -27,7 +28,8 @@
   <input id="search" type="text" placeholder="Search by name or phone" onkeyup="searchTable()" style="margin-bottom:10px; padding:5px;">
   <button onclick="exportCSV()">Export CSV</button>
 
-  <table id="transactions">
+  <div id="loading">Loading transactions...</div>
+  <table id="transactions" style="display:none;">
     <thead>
       <tr>
         <th>Transaction ID</th>
@@ -40,10 +42,7 @@
         <th>Time</th>
       </tr>
     </thead>
-    <tbody>
-      <tr><td>T001</td><td>John</td><td>0712345678</td><td>Daily 500MB</td><td>50</td><td>5</td><td>5</td><td>2025-10-29 12:00</td></tr>
-      <tr><td>T002</td><td>Amina</td><td>0798765432</td><td>Weekly 2GB</td><td>200</td><td>10</td><td>10</td><td>2025-10-29 12:10</td></tr>
-    </tbody>
+    <tbody></tbody>
   </table>
 </main>
 
@@ -59,7 +58,49 @@
     window.location.href = "login.html";
   }
 
-  // ✅ Simple search
+  // ✅ Fetch real transactions from backend
+  async function loadTransactions() {
+    const loading = document.getElementById("loading");
+    const table = document.getElementById("transactions");
+    const tbody = table.querySelector("tbody");
+
+    try {
+      const res = await fetch("https://rotcod-backend.onrender.com/api/transactions");
+      if (!res.ok) throw new Error("Failed to fetch transactions");
+
+      const data = await res.json();
+      tbody.innerHTML = "";
+
+      if (data.length === 0) {
+        loading.innerText = "No transactions found.";
+        return;
+      }
+
+      data.forEach(tx => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${tx.id || "—"}</td>
+          <td>${tx.customer || "—"}</td>
+          <td>${tx.phone || "—"}</td>
+          <td>${tx.bundle || "—"}</td>
+          <td>${tx.price || 0}</td>
+          <td>${tx.fee || 0}</td>
+          <td>${tx.profit || 0}</td>
+          <td>${tx.time || new Date().toLocaleString()}</td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      loading.style.display = "none";
+      table.style.display = "table";
+
+    } catch (error) {
+      loading.innerText = "⚠️ Could not load transactions.";
+      console.error(error);
+    }
+  }
+
+  // ✅ Search transactions
   function searchTable() {
     const input = document.getElementById("search").value.toLowerCase();
     const rows = document.querySelectorAll("#transactions tbody tr");
@@ -80,6 +121,9 @@
     link.download = "rotcod_transactions.csv";
     link.click();
   }
+
+  // 🚀 Load on startup
+  loadTransactions();
 </script>
 
 </body>

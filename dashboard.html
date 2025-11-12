@@ -16,8 +16,19 @@
     }
     header h1 { margin: 0; font-size: 22px; }
     main { padding: 20px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; border-radius: 8px; overflow: hidden; }
-    th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
     th { background: #1e40af; color: white; }
     tr:hover { background: #f1f5f9; }
     button {
@@ -37,95 +48,112 @@
       color: white;
       margin-top: 30px;
     }
-    .topbar {
+    .top-controls {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 10px;
+      margin-top: 20px;
     }
-    .logout {
-      background: #dc2626;
-    }
-    .logout:hover {
-      background: #ef4444;
+    input[type="text"] {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      width: 220px;
     }
   </style>
 </head>
 <body>
 
-<script>
-  // Redirect to login if not logged in
-  if (sessionStorage.getItem('isLoggedIn') !== 'true') {
-    window.location.href = 'login.html';
-  }
+  <header>
+    <h1>📊 Rotcod Admin Dashboard</h1>
+    <button onclick="logout()">Logout</button>
+  </header>
 
-  function logout() {
-    sessionStorage.removeItem('isLoggedIn');
-    window.location.href = 'login.html';
-  }
-</script>
+  <main>
+    <h2>Float Balance: <span id="floatBalance">$0.00</span></h2>
 
-<header>
-  <div class="topbar">
-    <h1>Rotcod Admin Dashboard</h1>
-  </div>
-  <button class="logout" onclick="logout()">Logout</button>
-</header>
+    <div class="top-controls">
+      <input type="text" id="searchBox" placeholder="Search by name or phone" onkeyup="filterTable()">
+      <button onclick="exportCSV()">📤 Export CSV</button>
+    </div>
 
-<main>
-  <h3>Float Balance: $0.00</h3>
+    <table id="transactionsTable">
+      <thead>
+        <tr>
+          <th>Transaction ID</th>
+          <th>Customer</th>
+          <th>Phone</th>
+          <th>Bundle</th>
+          <th>Price</th>
+          <th>Fee</th>
+          <th>Profit</th>
+          <th>Time</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </main>
 
-  <div>
-    <input type="text" id="search" placeholder="Search by name or phone" style="padding:8px;width:250px;">
-    <button onclick="exportCSV()">Export CSV</button>
-  </div>
+  <footer>© 2025 Rotcod Data Bundles — Admin Portal</footer>
 
-  <table id="transactionsTable">
-    <thead>
-      <tr>
-        <th>Transaction ID</th>
-        <th>Customer</th>
-        <th>Phone</th>
-        <th>Bundle</th>
-        <th>Price</th>
-        <th>Fee</th>
-        <th>Profit</th>
-        <th>Time</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>T001</td>
-        <td>John</td>
-        <td>0712345678</td>
-        <td>Daily 500MB</td>
-        <td>50</td>
-        <td>5</td>
-        <td>5</td>
-        <td>2025-10-29 12:00</td>
-      </tr>
-      <tr>
-        <td>T002</td>
-        <td>Amina</td>
-        <td>0798765432</td>
-        <td>Weekly 2GB</td>
-        <td>200</td>
-        <td>10</td>
-        <td>10</td>
-        <td>2025-10-29 12:10</td>
-      </tr>
-    </tbody>
-  </table>
-</main>
+  <script>
+    // 🔒 Redirect if not logged in
+    if (!localStorage.getItem("isLoggedIn")) {
+      window.location.href = "login.html";
+    }
 
-<footer>
-  © 2025 Rotcod Data Bundles — Admin Dashboard
-</footer>
+    // 🧾 Dummy data (replace later with backend fetch)
+    const transactions = [
+      { id: "T001", customer: "John", phone: "0712345678", bundle: "Daily 500MB", price: 50, fee: 5, profit: 5, time: "2025-10-29 12:00" },
+      { id: "T002", customer: "Amina", phone: "0798765432", bundle: "Weekly 2GB", price: 200, fee: 10, profit: 10, time: "2025-10-29 12:10" }
+    ];
 
-<script>
-  function exportCSV() {
-    alert("Exporting CSV file...");
-  }
-</script>
+    function loadTable() {
+      const tbody = document.querySelector("#transactionsTable tbody");
+      tbody.innerHTML = "";
+      transactions.forEach(t => {
+        const row = `
+          <tr>
+            <td>${t.id}</td>
+            <td>${t.customer}</td>
+            <td>${t.phone}</td>
+            <td>${t.bundle}</td>
+            <td>${t.price}</td>
+            <td>${t.fee}</td>
+            <td>${t.profit}</td>
+            <td>${t.time}</td>
+          </tr>`;
+        tbody.innerHTML += row;
+      });
+    }
+
+    function filterTable() {
+      const query = document.getElementById("searchBox").value.toLowerCase();
+      const rows = document.querySelectorAll("#transactionsTable tbody tr");
+      rows.forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(query) ? "" : "none";
+      });
+    }
+
+    function exportCSV() {
+      let csv = "Transaction ID,Customer,Phone,Bundle,Price,Fee,Profit,Time\n";
+      transactions.forEach(t => {
+        csv += `${t.id},${t.customer},${t.phone},${t.bundle},${t.price},${t.fee},${t.profit},${t.time}\n`;
+      });
+      const blob = new Blob([csv], { type: "text/csv" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "transactions.csv";
+      link.click();
+    }
+
+    function logout() {
+      localStorage.removeItem("isLoggedIn");
+      window.location.href = "login.html";
+    }
+
+    loadTable();
+  </script>
 
 </body>
 </html>

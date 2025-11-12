@@ -7,84 +7,96 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f3f4f6;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      background: linear-gradient(135deg, #1e3a8a, #2563eb);
       height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       margin: 0;
     }
     .login-box {
       background: white;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      width: 300px;
       text-align: center;
-      width: 320px;
     }
-    h2 {
+    .login-box h2 {
       color: #1e40af;
+      margin-bottom: 25px;
     }
-    input {
-      display: block;
-      width: 90%;
-      margin: 10px auto;
+    input[type="text"], input[type="password"] {
+      width: 100%;
       padding: 10px;
+      margin: 8px 0;
       border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 16px;
+      border-radius: 5px;
+      font-size: 14px;
     }
     button {
       background: #1e40af;
       color: white;
-      padding: 10px 15px;
       border: none;
-      border-radius: 6px;
-      cursor: pointer;
+      padding: 10px;
       width: 100%;
-      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 15px;
+      margin-top: 10px;
     }
     button:hover {
       background: #2563eb;
     }
     .error {
       color: red;
+      font-size: 13px;
       margin-top: 10px;
-      font-size: 14px;
+    }
+    footer {
+      text-align: center;
+      color: white;
+      font-size: 13px;
+      position: absolute;
+      bottom: 10px;
+      width: 100%;
     }
   </style>
 </head>
 <body>
 
   <div class="login-box">
-    <h2>🔐 Rotcod Admin Login</h2>
-    <form id="loginForm">
-      <input type="text" id="username" placeholder="Username" required>
-      <input type="password" id="password" placeholder="Password" required>
-      <button type="submit">Login</button>
-    </form>
+    <h2>🔐 Admin Login</h2>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
     <p class="error" id="errorMsg"></p>
   </div>
 
+  <footer>© 2025 Rotcod Data Bundles</footer>
+
   <script>
-    document.getElementById('loginForm').addEventListener('submit', function (e) {
-      e.preventDefault();
+    // Check if already logged in
+    if (localStorage.getItem("isLoggedIn")) {
+      window.location.href = "dashboard.html";
+    }
 
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value.trim();
-      const errorMsg = document.getElementById('errorMsg');
+    function login() {
+      const user = document.getElementById("username").value.trim();
+      const pass = document.getElementById("password").value.trim();
+      const errorMsg = document.getElementById("errorMsg");
 
-      // Admin credentials (change them if you wish)
-      const adminUser = 'admin';
-      const adminPass = 'rotcod123';
+      // ✅ You can change this username/password below
+      const correctUser = "admin";
+      const correctPass = "1234";
 
-      if (username === adminUser && password === adminPass) {
-        sessionStorage.setItem('isLoggedIn', 'true');
-        window.location.href = 'dashboard.html';
+      if (user === correctUser && pass === correctPass) {
+        localStorage.setItem("isLoggedIn", "true");
+        window.location.href = "dashboard.html";
       } else {
-        errorMsg.textContent = '❌ Invalid username or password';
+        errorMsg.textContent = "❌ Incorrect username or password";
       }
-    });
+    }
   </script>
 
 </body>

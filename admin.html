@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rotcod Admin Dashboard</title>
+<style>
+  body { font-family: Arial; padding:20px; background:#f3f4f6; }
+  header { display:flex; justify-content:space-between; align-items:center; background:#1e40af; color:white; padding:15px; border-radius:5px; }
+  button.logout { background:#f87171; border:none; color:white; padding:5px 10px; border-radius:5px; cursor:pointer; }
+  button.logout:hover { background:#ef4444; }
+  table { width:100%; margin-top:20px; border-collapse:collapse; }
+  th, td { border:1px solid #ccc; padding:8px; text-align:center; }
+  th { background:#1e40af; color:white; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Rotcod Admin Dashboard</h1>
+  <button class="logout" onclick="logout()">Logout</button>
+</header>
+
+<div>Float Balance: $0.00</div>
+
+<input type="text" id="search" placeholder="Search by name or phone" oninput="search()" />
+
+<table id="transactions">
+  <thead>
+    <tr>
+      <th>Transaction ID</th>
+      <th>Customer</th>
+      <th>Phone</th>
+      <th>Bundle</th>
+      <th>Price</th>
+      <th>Fee</th>
+      <th>Profit</th>
+      <th>Time</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Transactions will appear here -->
+  </tbody>
+</table>
+
+<script>
+  // Redirect to login if not logged in
+  if(localStorage.getItem("isLoggedIn") !== "true") {
+    window.location.href = "login.html";
+  }
+
+  // Logout
+  function logout() {
+    localStorage.removeItem("isLoggedIn");
+    window.location.href = "login.html";
+  }
+
+  const transactions = [
+    { id: "T001", customer: "John", phone: "0712345678", bundle: "Daily 500MB", price: 50, fee: 5, profit: 5, time: "2025-10-29 12:00" },
+    { id: "T002", customer: "Amina", phone: "0798765432", bundle: "Weekly 2GB", price: 200, fee: 10, profit: 10, time: "2025-10-29 12:10" }
+  ];
+
+  const tbody = document.getElementById("transactions").querySelector("tbody");
+
+  function loadTransactions() {
+    tbody.innerHTML = "";
+    transactions.forEach(tx => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${tx.id}</td>
+        <td>${tx.customer}</td>
+        <td>${tx.phone}</td>
+        <td>${tx.bundle}</td>
+        <td>${tx.price}</td>
+        <td>${tx.fee}</td>
+        <td>${tx.profit}</td>
+        <td>${tx.time}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  loadTransactions();
+
+  // Search function
+  function search() {
+    const query = document.getElementById("search").value.toLowerCase();
+    Array.from(tbody.children).forEach(tr => {
+      const rowText = tr.textContent.toLowerCase();
+      tr.style.display = rowText.includes(query) ? "" : "none";
+    });
+  }
+</script>
+
+</body>
+</html>

@@ -1,105 +1,131 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rotcod Admin Dashboard</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #f9fafb; }
-    h1 { color: #1e40af; }
-    .card { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
-    table { width: 100%; border-collapse: collapse; background: white; }
-    th, td { padding: 10px; border-bottom: 1px solid #ddd; text-align: left; }
+    body { font-family: Arial, sans-serif; background: #f3f4f6; margin: 0; }
+    header {
+      background: #1e40af;
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 { margin: 0; font-size: 22px; }
+    main { padding: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; border-radius: 8px; overflow: hidden; }
+    th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
     th { background: #1e40af; color: white; }
-    input, button { padding: 8px; margin-right: 10px; border-radius: 5px; border: 1px solid #ccc; }
-    button { background: #1e40af; color: white; cursor: pointer; }
+    tr:hover { background: #f1f5f9; }
+    button {
+      background: #1e40af;
+      color: white;
+      padding: 8px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
     button:hover { background: #2563eb; }
+    footer {
+      text-align: center;
+      padding: 15px;
+      background: #1e40af;
+      color: white;
+      margin-top: 30px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logout {
+      background: #dc2626;
+    }
+    .logout:hover {
+      background: #ef4444;
+    }
   </style>
 </head>
 <body>
-  <h1>Rotcod Admin Dashboard</h1>
-  <div class="card">
-    <p><strong>Float Balance:</strong> $<span id="floatBalance">0.00</span></p>
-    <input type="text" id="searchInput" placeholder="Search by name or phone" />
+
+<script>
+  // Redirect to login if not logged in
+  if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+    window.location.href = 'login.html';
+  }
+
+  function logout() {
+    sessionStorage.removeItem('isLoggedIn');
+    window.location.href = 'login.html';
+  }
+</script>
+
+<header>
+  <div class="topbar">
+    <h1>Rotcod Admin Dashboard</h1>
+  </div>
+  <button class="logout" onclick="logout()">Logout</button>
+</header>
+
+<main>
+  <h3>Float Balance: $0.00</h3>
+
+  <div>
+    <input type="text" id="search" placeholder="Search by name or phone" style="padding:8px;width:250px;">
     <button onclick="exportCSV()">Export CSV</button>
   </div>
 
-  <div class="card">
-    <table>
-      <thead>
-        <tr>
-          <th>Transaction ID</th>
-          <th>Customer</th>
-          <th>Phone</th>
-          <th>Bundle</th>
-          <th>Price</th>
-          <th>Fee</th>
-          <th>Profit</th>
-          <th>Time</th>
-        </tr>
-      </thead>
-      <tbody id="transactionsTable"></tbody>
-    </table>
-  </div>
+  <table id="transactionsTable">
+    <thead>
+      <tr>
+        <th>Transaction ID</th>
+        <th>Customer</th>
+        <th>Phone</th>
+        <th>Bundle</th>
+        <th>Price</th>
+        <th>Fee</th>
+        <th>Profit</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>T001</td>
+        <td>John</td>
+        <td>0712345678</td>
+        <td>Daily 500MB</td>
+        <td>50</td>
+        <td>5</td>
+        <td>5</td>
+        <td>2025-10-29 12:00</td>
+      </tr>
+      <tr>
+        <td>T002</td>
+        <td>Amina</td>
+        <td>0798765432</td>
+        <td>Weekly 2GB</td>
+        <td>200</td>
+        <td>10</td>
+        <td>10</td>
+        <td>2025-10-29 12:10</td>
+      </tr>
+    </tbody>
+  </table>
+</main>
 
-  <script>
-    const BACKEND_URL = "https://rotcod-backend.onrender.com";
+<footer>
+  © 2025 Rotcod Data Bundles — Admin Dashboard
+</footer>
 
-    async function loadBundles() {
-      try {
-        const res = await fetch(`${BACKEND_URL}/api/bundles`);
-        const bundles = await res.json();
-        console.log("Bundles:", bundles); // For testing
-      } catch (err) {
-        console.error("Failed to load bundles", err);
-      }
-    }
+<script>
+  function exportCSV() {
+    alert("Exporting CSV file...");
+  }
+</script>
 
-    // Simulate transactions (later we’ll load from backend)
-    const transactions = [
-      { id: "T001", name: "John", phone: "0712345678", bundle: "Daily 500MB", price: 50, fee: 5, profit: 5, time: "2025-10-29 12:00" },
-      { id: "T002", name: "Amina", phone: "0798765432", bundle: "Weekly 2GB", price: 200, fee: 10, profit: 10, time: "2025-10-29 12:10" }
-    ];
-
-    function renderTransactions(list) {
-      const table = document.getElementById("transactionsTable");
-      table.innerHTML = list.map(t => `
-        <tr>
-          <td>${t.id}</td>
-          <td>${t.name}</td>
-          <td>${t.phone}</td>
-          <td>${t.bundle}</td>
-          <td>${t.price}</td>
-          <td>${t.fee}</td>
-          <td>${t.profit}</td>
-          <td>${t.time}</td>
-        </tr>
-      `).join("");
-    }
-
-    function exportCSV() {
-      let csv = "Transaction ID,Customer,Phone,Bundle,Price,Fee,Profit,Time\n";
-      transactions.forEach(t => {
-        csv += `${t.id},${t.name},${t.phone},${t.bundle},${t.price},${t.fee},${t.profit},${t.time}\n`;
-      });
-      const blob = new Blob([csv], { type: "text/csv" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "transactions.csv";
-      link.click();
-    }
-
-    document.getElementById("searchInput").addEventListener("input", e => {
-      const search = e.target.value.toLowerCase();
-      const filtered = transactions.filter(t =>
-        t.name.toLowerCase().includes(search) || t.phone.includes(search)
-      );
-      renderTransactions(filtered);
-    });
-
-    // Load bundles & render transactions
-    loadBundles();
-    renderTransactions(transactions);
-  </script>
 </body>
 </html>

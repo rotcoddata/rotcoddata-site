@@ -5,126 +5,119 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rotcod Admin Dashboard</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f9fafb; margin: 0; }
-    header { background: #1e40af; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
-    h1 { margin: 0; }
-    button.logout { background: #dc2626; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
-    main { padding: 20px; }
-    table { width: 100%; border-collapse: collapse; background: white; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-    th { background: #1e40af; color: white; }
-    #loading { text-align: center; padding: 10px; color: gray; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #1e40af;
+      color: white;
+      padding: 15px;
+      text-align: center;
+    }
+    .container {
+      padding: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background: #2563eb;
+      color: white;
+    }
+    tr:hover {
+      background-color: #f1f5f9;
+    }
+    .logout-btn {
+      float: right;
+      background: #ef4444;
+      border: none;
+      color: white;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .logout-btn:hover {
+      background: #dc2626;
+    }
   </style>
 </head>
 <body>
 
-<header>
-  <h1>Rotcod Admin Dashboard</h1>
-  <button class="logout" onclick="logout()">Logout</button>
-</header>
+  <header>
+    <h2>Rotcod Admin Dashboard</h2>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </header>
 
-<main>
-  <h3>Float Balance: <span id="balance">$0.00</span></h3>
-  <input id="search" type="text" placeholder="Search by name or phone" onkeyup="searchTable()" style="margin-bottom:10px; padding:5px;">
-  <button onclick="exportCSV()">Export CSV</button>
+  <div class="container">
+    <h3>📊 Transactions</h3>
+    <table id="transactionsTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Customer</th>
+          <th>Phone</th>
+          <th>Bundle</th>
+          <th>Price</th>
+          <th>Fee</th>
+          <th>Profit</th>
+          <th>Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="8" style="text-align:center;">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
 
-  <div id="loading">Loading transactions...</div>
-  <table id="transactions" style="display:none;">
-    <thead>
-      <tr>
-        <th>Transaction ID</th>
-        <th>Customer</th>
-        <th>Phone</th>
-        <th>Bundle</th>
-        <th>Price</th>
-        <th>Fee</th>
-        <th>Profit</th>
-        <th>Time</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</main>
-
-<script>
-  // ✅ Block unauthorized access
-  if (!localStorage.getItem("rotcod_admin")) {
-    window.location.href = "login.html";
-  }
-
-  // ✅ Logout
-  function logout() {
-    localStorage.removeItem("rotcod_admin");
-    window.location.href = "login.html";
-  }
-
-  // ✅ Fetch real transactions from backend
-  async function loadTransactions() {
-    const loading = document.getElementById("loading");
-    const table = document.getElementById("transactions");
-    const tbody = table.querySelector("tbody");
-
-    try {
-      const res = await fetch("https://rotcod-backend.onrender.com/api/transactions");
-      if (!res.ok) throw new Error("Failed to fetch transactions");
-
-      const data = await res.json();
-      tbody.innerHTML = "";
-
-      if (data.length === 0) {
-        loading.innerText = "No transactions found.";
-        return;
-      }
-
-      data.forEach(tx => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${tx.id || "—"}</td>
-          <td>${tx.customer || "—"}</td>
-          <td>${tx.phone || "—"}</td>
-          <td>${tx.bundle || "—"}</td>
-          <td>${tx.price || 0}</td>
-          <td>${tx.fee || 0}</td>
-          <td>${tx.profit || 0}</td>
-          <td>${tx.time || new Date().toLocaleString()}</td>
-        `;
-        tbody.appendChild(row);
-      });
-
-      loading.style.display = "none";
-      table.style.display = "table";
-
-    } catch (error) {
-      loading.innerText = "⚠️ Could not load transactions.";
-      console.error(error);
+  <script>
+    // Security check
+    if (!localStorage.getItem("rotcod_admin")) {
+      window.location.href = "login.html";
     }
-  }
 
-  // ✅ Search transactions
-  function searchTable() {
-    const input = document.getElementById("search").value.toLowerCase();
-    const rows = document.querySelectorAll("#transactions tbody tr");
-    rows.forEach(row => {
-      row.style.display = row.innerText.toLowerCase().includes(input) ? "" : "none";
-    });
-  }
+    async function loadTransactions() {
+      const tableBody = document.querySelector("#transactionsTable tbody");
 
-  // ✅ Export CSV
-  function exportCSV() {
-    const rows = document.querySelectorAll("table tr");
-    const csv = Array.from(rows).map(row =>
-      Array.from(row.children).map(cell => `"${cell.innerText}"`).join(",")
-    ).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "rotcod_transactions.csv";
-    link.click();
-  }
+      try {
+        const res = await fetch("https://rotcod-backend.onrender.com/api/transactions");
+        const data = await res.json();
 
-  // 🚀 Load on startup
-  loadTransactions();
-</script>
+        tableBody.innerHTML = data.map(tx => `
+          <tr>
+            <td>${tx.id}</td>
+            <td>${tx.customer}</td>
+            <td>${tx.phone}</td>
+            <td>${tx.bundle}</td>
+            <td>${tx.price}</td>
+            <td>${tx.fee}</td>
+            <td>${tx.profit}</td>
+            <td>${tx.time}</td>
+          </tr>
+        `).join("");
+      } catch (err) {
+        tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:red;">Error loading data</td></tr>`;
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("rotcod_admin");
+      window.location.href = "login.html";
+    }
+
+    loadTransactions();
+  </script>
 
 </body>
 </html>

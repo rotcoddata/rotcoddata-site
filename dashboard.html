@@ -4,26 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>📊 Rotcod Admin Dashboard</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js">
 <style>
-  body { font-family: Arial, sans-serif; margin:0; background:#f3f4f6; transition: background 0.3s, color 0.3s; }
-  header { display:flex; justify-content:space-between; align-items:center; background:#1e40af; color:white; padding:15px 20px; }
-  header h1 { margin:0; font-size:24px; display:flex; align-items:center; gap:10px; }
-  header button { background:#2563eb; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; margin-left:10px; }
-  header button:hover { background:#1e40af; }
-  .metrics { display:flex; gap:20px; margin:20px; flex-wrap:wrap; }
-  .card { background:white; padding:15px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1); flex:1 1 150px; text-align:center; }
-  .card h2 { margin:0; font-size:20px; color:#1e40af; }
-  .card p { margin:5px 0 0; font-size:18px; font-weight:bold; }
-  #transactions-container { margin:20px; }
-  table { width:100%; border-collapse: collapse; }
-  th, td { padding:10px; border:1px solid #ddd; text-align:center; }
-  th { background:#1e40af; color:white; }
-  #chartContainer { width:100%; max-width:800px; margin:20px auto; }
-  .dark-mode { background:#111827; color:white; }
-  .dark-mode table th { background:#2563eb; color:white; }
-  .dark-mode .card { background:#1f2937; color:white; }
+  body { font-family: Arial, sans-serif; margin:0; background:#f3f4f6; color:#111; transition:0.3s; }
+  body.dark { background:#1e1e2f; color:#ddd; }
+  header { display:flex; justify-content:space-between; align-items:center; padding:15px 20px; background:#1e40af; color:white; }
+  header button { background:#2563eb; color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:5px; margin-left:10px; }
+  main { padding:20px; }
+  .stats { display:flex; flex-wrap:wrap; gap:20px; margin-bottom:20px; }
+  .card { background:white; border-radius:10px; padding:15px; flex:1 1 150px; box-shadow:0 2px 6px rgba(0,0,0,0.1); text-align:center; transition:0.3s; }
+  body.dark .card { background:#2a2a3b; color:#ddd; }
+  .card h3 { margin:10px 0; font-size:20px; }
+  #searchExport { display:flex; justify-content:space-between; margin-bottom:10px; flex-wrap:wrap; gap:10px; }
+  #searchExport input { padding:5px; flex:1; min-width:150px; }
+  #transactions { width:100%; border-collapse:collapse; }
+  #transactions th, #transactions td { border:1px solid #ccc; padding:8px; text-align:center; }
+  body.dark #transactions th, body.dark #transactions td { border-color:#555; }
+  canvas { margin-top:30px; background:white; border-radius:10px; padding:10px; }
+  body.dark canvas { background:#2a2a3b; }
 </style>
 </head>
 <body>
@@ -36,35 +34,35 @@
   </div>
 </header>
 
-<div class="metrics">
-  <div class="card">
-    <h2>Float Balance</h2>
-    <p id="floatBalance">$0.00</p>
+<main>
+  <div class="stats">
+    <div class="card">
+      <h3>Float Balance</h3>
+      <p id="floatBalance">$30</p>
+    </div>
+    <div class="card">
+      <h3>Total Sales</h3>
+      <p id="totalSales">$250</p>
+    </div>
+    <div class="card">
+      <h3>Total Profit</h3>
+      <p id="totalProfit">$15</p>
+    </div>
+    <div class="card">
+      <h3>Bundles Sold</h3>
+      <p id="bundlesSold">2</p>
+    </div>
+    <div class="card">
+      <h3>Total Transactions</h3>
+      <p id="totalTransactions">2</p>
+    </div>
   </div>
-  <div class="card">
-    <h2>Total Sales</h2>
-    <p id="totalSales">$0</p>
-  </div>
-  <div class="card">
-    <h2>Total Profit</h2>
-    <p id="totalProfit">$0</p>
-  </div>
-  <div class="card">
-    <h2>Bundles Sold</h2>
-    <p id="bundlesSold">0</p>
-  </div>
-  <div class="card">
-    <h2>Total Transactions</h2>
-    <p id="totalTransactions">0</p>
-  </div>
-</div>
 
-<div style="margin:20px;">
-  <input type="text" id="searchInput" placeholder="Search by Customer or Phone" oninput="filterTable()" style="padding:8px;width:300px;margin-bottom:10px;">
-  <button onclick="exportTableToExcel('transactions', 'transactions')">Export Excel</button>
-</div>
+  <div id="searchExport">
+    <input type="text" id="searchInput" placeholder="Search by Customer or Phone" onkeyup="filterTable()">
+    <button onclick="exportToExcel()">Export Excel</button>
+  </div>
 
-<div id="transactions-container">
   <table id="transactions">
     <thead>
       <tr>
@@ -78,116 +76,89 @@
         <th>Time</th>
       </tr>
     </thead>
-    <tbody></tbody>
+    <tbody id="transactionBody">
+      <tr><td>T001</td><td>John</td><td>0712345678</td><td>Daily 500MB</td><td>50</td><td>5</td><td>5</td><td>2025-10-29 12:00</td></tr>
+      <tr><td>T002</td><td>Amina</td><td>0798765432</td><td>Weekly 2GB</td><td>200</td><td>10</td><td>10</td><td>2025-10-29 12:10</td></tr>
+    </tbody>
   </table>
-</div>
 
-<div id="chartContainer">
-  <canvas id="salesChart"></canvas>
-</div>
+  <canvas id="bundlesChart" width="400" height="200"></canvas>
+  <canvas id="revenueChart" width="400" height="200"></canvas>
+</main>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-const BACKEND_URL = "https://rotcod-backend.onrender.com";
+  // Dark mode
+  function toggleDarkMode() {
+    document.body.classList.toggle('dark');
+  }
 
-// Dark mode toggle
-function toggleDarkMode() {
-  document.body.classList.toggle("dark-mode");
-}
+  // Logout
+  function logout() {
+    localStorage.removeItem("rotcod_admin");
+    window.location.href = "login.html";
+  }
 
-// Logout
-function logout() {
-  localStorage.removeItem("rotcod_admin");
-  window.location.href = "login.html";
-}
+  // Filter table
+  function filterTable() {
+    const filter = document.getElementById('searchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#transactionBody tr');
+    rows.forEach(row => {
+      row.style.display = [...row.cells].some(cell => cell.textContent.toLowerCase().includes(filter)) ? '' : 'none';
+    });
+  }
 
-// Check login
-if (!localStorage.getItem("rotcod_admin")) {
-  window.location.href = "login.html";
-}
+  // Export to Excel
+  function exportToExcel() {
+    const table = document.getElementById('transactions');
+    const wb = XLSX.utils.table_to_book(table, {sheet: "Transactions"});
+    XLSX.writeFile(wb, "transactions.xlsx");
+  }
 
-// Fetch transactions and update dashboard
-async function loadDashboard() {
-  const res = await fetch(BACKEND_URL + "/api/transactions");
-  const transactions = await res.json();
+  // Charts
+  const bundlesCtx = document.getElementById('bundlesChart').getContext('2d');
+  const revenueCtx = document.getElementById('revenueChart').getContext('2d');
 
-  // Update metrics
-  const totalSales = transactions.reduce((a,t) => a + t.price,0);
-  const totalProfit = transactions.reduce((a,t) => a + t.profit,0);
-  const bundlesSold = transactions.length;
-  const totalTransactions = transactions.length;
-  const floatBalance = totalProfit * 2; // Example: set float balance logic
-
-  document.getElementById("totalSales").innerText = "$" + totalSales;
-  document.getElementById("totalProfit").innerText = "$" + totalProfit;
-  document.getElementById("bundlesSold").innerText = bundlesSold;
-  document.getElementById("totalTransactions").innerText = totalTransactions;
-  document.getElementById("floatBalance").innerText = "$" + floatBalance;
-
-  // Fill table
-  const tbody = document.querySelector("#transactions tbody");
-  tbody.innerHTML = "";
-  transactions.forEach(t => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${t.id}</td>
-      <td>${t.customer}</td>
-      <td>${t.phone}</td>
-      <td>${t.bundle}</td>
-      <td>${t.price}</td>
-      <td>${t.fee}</td>
-      <td>${t.profit}</td>
-      <td>${t.time}</td>
-    `;
-    tbody.appendChild(row);
-  });
-
-  // Prepare chart data
-  const bundleCounts = {};
-  transactions.forEach(t => {
-    bundleCounts[t.bundle] = (bundleCounts[t.bundle] || 0) + 1;
-  });
-
-  const ctx = document.getElementById('salesChart').getContext('2d');
-  if (window.salesChart) window.salesChart.destroy();
-  window.salesChart = new Chart(ctx, {
+  const bundlesChart = new Chart(bundlesCtx, {
     type: 'bar',
     data: {
-      labels: Object.keys(bundleCounts),
+      labels: ['Daily 500MB','Weekly 2GB'],
       datasets: [{
         label: 'Bundles Sold',
-        data: Object.values(bundleCounts),
-        backgroundColor: '#2563eb'
+        data: [1,1],
+        backgroundColor: ['#1e40af','#2563eb']
       }]
     },
-    options: { responsive:true, plugins:{ legend:{ display:false } } }
+    options: { responsive:true }
   });
-}
 
-// Search/filter table
-function filterTable() {
-  const filter = document.getElementById("searchInput").value.toLowerCase();
-  const rows = document.querySelectorAll("#transactions tbody tr");
-  rows.forEach(row => {
-    row.style.display = [...row.cells].some(td => td.innerText.toLowerCase().includes(filter)) ? "" : "none";
+  const revenueChart = new Chart(revenueCtx, {
+    type: 'line',
+    data: {
+      labels: ['2025-10-29 12:00','2025-10-29 12:10'],
+      datasets: [{
+        label:'Revenue',
+        data: [50,200],
+        borderColor:'#1e40af',
+        backgroundColor:'rgba(30,64,175,0.2)',
+        fill:true
+      },{
+        label:'Profit',
+        data:[5,10],
+        borderColor:'#2563eb',
+        backgroundColor:'rgba(37,99,235,0.2)',
+        fill:true
+      }]
+    },
+    options:{ responsive:true }
   });
-}
 
-// Export table to Excel
-function exportTableToExcel(tableID, filename = '') {
-  const table = document.getElementById(tableID);
-  const html = table.outerHTML.replace(/ /g, '%20');
-  const a = document.createElement('a');
-  a.href = 'data:application/vnd.ms-excel,' + html;
-  a.download = filename ? filename + '.xls' : 'excel_data.xls';
-  a.click();
-}
-
-// Auto refresh every 60 seconds
-setInterval(loadDashboard, 60000);
-
-// Initial load
-loadDashboard();
+  // Auto-refresh every 30s
+  setInterval(() => location.reload(), 30000);
 </script>
+
+<!-- XLSX library for Export Excel -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 </body>
 </html>

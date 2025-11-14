@@ -4,28 +4,72 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rotcod Admin Dashboard</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f3f4f6;
+      background: #f5f6fa;
       margin: 0;
       padding: 0;
     }
+
     header {
       background: #1e40af;
       color: white;
-      padding: 15px;
-      text-align: center;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
+
+    header h2 {
+      margin: 0;
+    }
+
+    header button {
+      padding: 8px 14px;
+      background: #ef4444;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+    }
+
     .container {
       padding: 20px;
     }
+
+    /* Summary Cards */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .card h3 {
+      margin: 0;
+      color: #1e40af;
+    }
+    .card p {
+      margin: 10px 0 0;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
     table {
       width: 100%;
-      border-collapse: collapse;
       background: white;
-      border-radius: 10px;
-      overflow: hidden;
+      border-collapse: collapse;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     th, td {
       padding: 10px;
@@ -33,91 +77,110 @@
       text-align: left;
     }
     th {
-      background: #2563eb;
+      background: #1e40af;
       color: white;
-    }
-    tr:hover {
-      background-color: #f1f5f9;
-    }
-    .logout-btn {
-      float: right;
-      background: #ef4444;
-      border: none;
-      color: white;
-      padding: 8px 15px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .logout-btn:hover {
-      background: #dc2626;
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <h2>Rotcod Admin Dashboard</h2>
-    <button class="logout-btn" onclick="logout()">Logout</button>
-  </header>
+<header>
+  <h2>Rotcod Admin Dashboard</h2>
+  <button onclick="logout()">Logout</button>
+</header>
 
-  <div class="container">
-    <h3>📊 Transactions</h3>
-    <table id="transactionsTable">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Customer</th>
-          <th>Phone</th>
-          <th>Bundle</th>
-          <th>Price</th>
-          <th>Fee</th>
-          <th>Profit</th>
-          <th>Time</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td colspan="8" style="text-align:center;">Loading...</td></tr>
-      </tbody>
-    </table>
+<div class="container">
+
+  <!-- Summary Cards -->
+  <div class="cards">
+    <div class="card">
+      <h3>Total Sales</h3>
+      <p id="totalSales">0</p>
+    </div>
+    <div class="card">
+      <h3>Total Profit</h3>
+      <p id="totalProfit">0</p>
+    </div>
+    <div class="card">
+      <h3>Bundles Sold</h3>
+      <p id="totalBundles">0</p>
+    </div>
+    <div class="card">
+      <h3>Total Transactions</h3>
+      <p id="totalTx">0</p>
+    </div>
   </div>
 
-  <script>
-    // Security check
-    if (!localStorage.getItem("rotcod_admin")) {
-      window.location.href = "login.html";
-    }
+  <h3>📊 Transactions</h3>
 
-    async function loadTransactions() {
-      const tableBody = document.querySelector("#transactionsTable tbody");
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Customer</th>
+        <th>Phone</th>
+        <th>Bundle</th>
+        <th>Price</th>
+        <th>Fee</th>
+        <th>Profit</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody id="txTable"></tbody>
+  </table>
+</div>
 
-      try {
-        const res = await fetch("https://rotcod-backend.onrender.com/api/transactions");
-        const data = await res.json();
+<script>
+  const API = "https://rotcod-backend.onrender.com";
 
-        tableBody.innerHTML = data.map(tx => `
-          <tr>
-            <td>${tx.id}</td>
-            <td>${tx.customer}</td>
-            <td>${tx.phone}</td>
-            <td>${tx.bundle}</td>
-            <td>${tx.price}</td>
-            <td>${tx.fee}</td>
-            <td>${tx.profit}</td>
-            <td>${tx.time}</td>
-          </tr>
-        `).join("");
-      } catch (err) {
-        tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:red;">Error loading data</td></tr>`;
-      }
-    }
+  // Block access without login
+  if (!localStorage.getItem("rotcod_admin")) {
+    window.location.href = "login.html";
+  }
 
-    function logout() {
-      localStorage.removeItem("rotcod_admin");
-      window.location.href = "login.html";
-    }
+  function logout() {
+    localStorage.removeItem("rotcod_admin");
+    window.location.href = "login.html";
+  }
 
-    loadTransactions();
-  </script>
+  async function loadTransactions() {
+    const res = await fetch(`${API}/api/transactions`);
+    const data = await res.json();
+
+    const table = document.getElementById("txTable");
+    table.innerHTML = "";
+
+    let totalSales = 0;
+    let totalProfit = 0;
+
+    data.forEach(tx => {
+      totalSales += tx.price;
+      totalProfit += tx.profit;
+
+      let row = `
+        <tr>
+          <td>${tx.id}</td>
+          <td>${tx.customer}</td>
+          <td>${tx.phone}</td>
+          <td>${tx.bundle}</td>
+          <td>${tx.price}</td>
+          <td>${tx.fee}</td>
+          <td>${tx.profit}</td>
+          <td>${tx.time}</td>
+        </tr>
+      `;
+      table.innerHTML += row;
+    });
+
+    document.getElementById("totalSales").textContent = totalSales;
+    document.getElementById("totalProfit").textContent = totalProfit;
+    document.getElementById("totalBundles").textContent = data.length;
+    document.getElementById("totalTx").textContent = data.length;
+  }
+
+  loadTransactions();
+  setInterval(loadTransactions, 30000); // auto-refresh every 30 sec
+</script>
 
 </body>
 </html>

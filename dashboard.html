@@ -1,87 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rotcod Admin Dashboard</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rotcod Admin Dashboard</title>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f6fa;
-      margin: 0;
-      padding: 0;
-    }
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    header {
-      background: #1e40af;
-      color: white;
-      padding: 15px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+<style>
+  body {
+    margin: 0;
+    background: #f3f4f6;
+    font-family: Arial, sans-serif;
+  }
 
-    header h2 {
-      margin: 0;
-    }
+  header {
+    background: #1e40af;
+    padding: 15px 20px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
 
-    header button {
-      padding: 8px 14px;
-      background: #ef4444;
-      border: none;
-      border-radius: 5px;
-      color: white;
-      cursor: pointer;
-    }
+  header h2 {
+    margin: 0;
+  }
 
-    .container {
-      padding: 20px;
-    }
+  button {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
 
-    /* Summary Cards */
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 15px;
-      margin-bottom: 20px;
-    }
+  button:hover {
+    background: #dc2626;
+  }
 
-    .card {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      text-align: center;
-    }
+  .container {
+    padding: 20px;
+  }
 
-    .card h3 {
-      margin: 0;
-      color: #1e40af;
-    }
-    .card p {
-      margin: 10px 0 0;
-      font-size: 20px;
-      font-weight: bold;
-    }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+  }
 
-    table {
-      width: 100%;
-      background: white;
-      border-collapse: collapse;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    th, td {
-      padding: 10px;
-      border-bottom: 1px solid #ddd;
-      text-align: left;
-    }
-    th {
-      background: #1e40af;
-      color: white;
-    }
-  </style>
+  .card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    text-align: center;
+  }
+
+  .table-box {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-top: 20px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+
+  th, td {
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+  }
+
+  th {
+    background: #e5e7eb;
+  }
+</style>
 </head>
+
 <body>
 
 <header>
@@ -91,7 +94,7 @@
 
 <div class="container">
 
-  <!-- Summary Cards -->
+  <!-- KPI CARDS -->
   <div class="cards">
     <div class="card">
       <h3>Total Sales</h3>
@@ -102,8 +105,8 @@
       <p id="totalProfit">0</p>
     </div>
     <div class="card">
-      <h3>Bundles Sold</h3>
-      <p id="totalBundles">0</p>
+      <h3>Float Balance</h3>
+      <p id="floatBalance">0</p>
     </div>
     <div class="card">
       <h3>Total Transactions</h3>
@@ -111,75 +114,161 @@
     </div>
   </div>
 
-  <h3>📊 Transactions</h3>
+  <!-- CHARTS -->
+  <div class="card">
+    <canvas id="salesChart"></canvas>
+  </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Customer</th>
-        <th>Phone</th>
-        <th>Bundle</th>
-        <th>Price</th>
-        <th>Fee</th>
-        <th>Profit</th>
-        <th>Time</th>
-      </tr>
-    </thead>
-    <tbody id="txTable"></tbody>
-  </table>
+  <div class="card" style="margin-top:20px;">
+    <canvas id="profitChart"></canvas>
+  </div>
+
+  <!-- TRANSACTIONS TABLE -->
+  <div class="table-box">
+    <h3>📊 Transactions</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th><th>Customer</th><th>Phone</th><th>Bundle</th>
+          <th>Price</th><th>Fee</th><th>Profit</th><th>Time</th>
+        </tr>
+      </thead>
+      <tbody id="txTable"></tbody>
+    </table>
+  </div>
+
 </div>
 
 <script>
-  const API = "https://rotcod-backend.onrender.com";
+/* -------------------------------
+    SECURE LOGIN CHECK
+--------------------------------*/
+if (!localStorage.getItem("rotcod_admin")) {
+  window.location.href = "login.html";
+}
 
-  // Block access without login
-  if (!localStorage.getItem("rotcod_admin")) {
-    window.location.href = "login.html";
-  }
+/* -------------------------------
+    LOGOUT
+--------------------------------*/
+function logout() {
+  localStorage.removeItem("rotcod_admin");
+  window.location.href = "login.html";
+}
 
-  function logout() {
-    localStorage.removeItem("rotcod_admin");
-    window.location.href = "login.html";
-  }
+/* -------------------------------
+    GLOBAL VARIABLES
+--------------------------------*/
+let salesChart;
+let profitChart;
 
-  async function loadTransactions() {
+const API = "https://rotcod-backend.onrender.com";
+
+/* -------------------------------
+    FETCH AND REFRESH DASHBOARD
+--------------------------------*/
+async function loadDashboard() {
+  try {
     const res = await fetch(`${API}/api/transactions`);
     const data = await res.json();
 
-    const table = document.getElementById("txTable");
-    table.innerHTML = "";
+    updateTable(data);
+    updateKPIs(data);
+    updateCharts(data);
 
-    let totalSales = 0;
-    let totalProfit = 0;
-
-    data.forEach(tx => {
-      totalSales += tx.price;
-      totalProfit += tx.profit;
-
-      let row = `
-        <tr>
-          <td>${tx.id}</td>
-          <td>${tx.customer}</td>
-          <td>${tx.phone}</td>
-          <td>${tx.bundle}</td>
-          <td>${tx.price}</td>
-          <td>${tx.fee}</td>
-          <td>${tx.profit}</td>
-          <td>${tx.time}</td>
-        </tr>
-      `;
-      table.innerHTML += row;
-    });
-
-    document.getElementById("totalSales").textContent = totalSales;
-    document.getElementById("totalProfit").textContent = totalProfit;
-    document.getElementById("totalBundles").textContent = data.length;
-    document.getElementById("totalTx").textContent = data.length;
+  } catch (e) {
+    console.error("Error loading data:", e);
   }
+}
 
-  loadTransactions();
-  setInterval(loadTransactions, 30000); // auto-refresh every 30 sec
+/* -------------------------------
+    UPDATE KPI CARDS
+--------------------------------*/
+function updateKPIs(data) {
+  const totalSales = data.reduce((sum, x) => sum + Number(x.price), 0);
+  const totalProfit = data.reduce((sum, x) => sum + Number(x.profit), 0);
+
+  document.getElementById("totalSales").textContent = totalSales;
+  document.getElementById("totalProfit").textContent = totalProfit;
+  document.getElementById("totalTx").textContent = data.length;
+
+  // FLOAT BALANCE = Total profit
+  document.getElementById("floatBalance").textContent = totalProfit;
+}
+
+/* -------------------------------
+    UPDATE TABLE
+--------------------------------*/
+function updateTable(data) {
+  const tbody = document.getElementById("txTable");
+  tbody.innerHTML = "";
+
+  data.forEach(t => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${t.id}</td>
+        <td>${t.customer || "—"}</td>
+        <td>${t.phone || "—"}</td>
+        <td>${t.bundleName}</td>
+        <td>${t.price}</td>
+        <td>${t.fee}</td>
+        <td>${t.profit}</td>
+        <td>${t.time}</td>
+      </tr>
+    `;
+  });
+}
+
+/* -------------------------------
+    CHARTS (Dynamic using Chart.js)
+--------------------------------*/
+function updateCharts(data) {
+  const labels = data.map(x => x.time);
+  const prices = data.map(x => Number(x.price));
+  const profits = data.map(x => Number(x.profit));
+
+  // SALES CHART (LINE)
+  if (salesChart) salesChart.destroy();
+  salesChart = new Chart(
+    document.getElementById("salesChart"),
+    {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label: "Sales",
+          data: prices,
+          borderWidth: 2
+        }]
+      }
+    }
+  );
+
+  // PROFIT CHART (BAR)
+  if (profitChart) profitChart.destroy();
+  profitChart = new Chart(
+    document.getElementById("profitChart"),
+    {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{
+          label: "Profit",
+          data: profits,
+          borderWidth: 2
+        }]
+      }
+    }
+  );
+}
+
+/* -------------------------------
+    AUTO REFRESH EVERY 10 SECONDS
+--------------------------------*/
+setInterval(loadDashboard, 10000);
+
+/* INITIAL LOAD */
+loadDashboard();
+
 </script>
 
 </body>

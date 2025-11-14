@@ -3,162 +3,246 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>📊 Rotcod Admin Dashboard</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js">
+<title>Rotcod Admin Dashboard</title>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
-  body { font-family: Arial, sans-serif; margin:0; background:#f3f4f6; color:#111; transition:0.3s; }
-  body.dark { background:#1e1e2f; color:#ddd; }
-  header { display:flex; justify-content:space-between; align-items:center; padding:15px 20px; background:#1e40af; color:white; }
-  header button { background:#2563eb; color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:5px; margin-left:10px; }
-  main { padding:20px; }
-  .stats { display:flex; flex-wrap:wrap; gap:20px; margin-bottom:20px; }
-  .card { background:white; border-radius:10px; padding:15px; flex:1 1 150px; box-shadow:0 2px 6px rgba(0,0,0,0.1); text-align:center; transition:0.3s; }
-  body.dark .card { background:#2a2a3b; color:#ddd; }
-  .card h3 { margin:10px 0; font-size:20px; }
-  #searchExport { display:flex; justify-content:space-between; margin-bottom:10px; flex-wrap:wrap; gap:10px; }
-  #searchExport input { padding:5px; flex:1; min-width:150px; }
-  #transactions { width:100%; border-collapse:collapse; }
-  #transactions th, #transactions td { border:1px solid #ccc; padding:8px; text-align:center; }
-  body.dark #transactions th, body.dark #transactions td { border-color:#555; }
-  canvas { margin-top:30px; background:white; border-radius:10px; padding:10px; }
-  body.dark canvas { background:#2a2a3b; }
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    color: #222;
+    transition: 0.3s;
+  }
+  .dark {
+    background: #1a1a1a;
+    color: white;
+  }
+  header {
+    padding: 15px;
+    background: #1e40af;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  #toggleMode {
+    cursor: pointer;
+    font-size: 20px;
+  }
+  .container {
+    padding: 20px;
+  }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  .card {
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 18px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+  .dark .card {
+    background: #2b2b2b;
+  }
+  #search {
+    width: 30%;
+    padding: 10px;
+    margin-bottom: 15px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+  }
+  table, th, td {
+    border: 1px solid #ccc;
+  }
+  th, td {
+    padding: 10px;
+    text-align: left;
+  }
+  .dark table, .dark th, .dark td {
+    border-color: #333;
+  }
+  canvas {
+    margin-top: 40px;
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>📊 Rotcod Admin Dashboard</h1>
+  <h2>📊 Rotcod Admin Dashboard</h2>
   <div>
-    <button onclick="toggleDarkMode()">🌙 Dark Mode</button>
-    <button onclick="logout()">Logout</button>
+    <span id="toggleMode">🌙</span>
+    <button onclick="logout()" style="padding:7px 15px; cursor:pointer;">Logout</button>
   </div>
 </header>
 
-<main>
-  <div class="stats">
-    <div class="card">
-      <h3>Float Balance</h3>
-      <p id="floatBalance">$30</p>
-    </div>
-    <div class="card">
-      <h3>Total Sales</h3>
-      <p id="totalSales">$250</p>
-    </div>
-    <div class="card">
-      <h3>Total Profit</h3>
-      <p id="totalProfit">$15</p>
-    </div>
-    <div class="card">
-      <h3>Bundles Sold</h3>
-      <p id="bundlesSold">2</p>
-    </div>
-    <div class="card">
-      <h3>Total Transactions</h3>
-      <p id="totalTransactions">2</p>
-    </div>
+<div class="container">
+
+  <div class="cards">
+    <div class="card"><b>Float Balance</b><br><span id="floatBalance">$0</span></div>
+    <div class="card"><b>Total Sales</b><br><span id="totalSales">$0</span></div>
+    <div class="card"><b>Total Profit</b><br><span id="totalProfit">$0</span></div>
+    <div class="card"><b>Bundles Sold</b><br><span id="bundleCount">0</span></div>
+    <div class="card"><b>Total Transactions</b><br><span id="txnCount">0</span></div>
   </div>
 
-  <div id="searchExport">
-    <input type="text" id="searchInput" placeholder="Search by Customer or Phone" onkeyup="filterTable()">
-    <button onclick="exportToExcel()">Export Excel</button>
-  </div>
+  <input id="search" type="text" placeholder="Search by Customer or Phone" onkeyup="filterTable()">
+  <button onclick="exportExcel()">Export Excel</button>
 
-  <table id="transactions">
+  <table id="txnTable">
     <thead>
       <tr>
-        <th>ID</th>
-        <th>Customer</th>
-        <th>Phone</th>
-        <th>Bundle</th>
-        <th>Price</th>
-        <th>Fee</th>
-        <th>Profit</th>
-        <th>Time</th>
+        <th>ID</th><th>Customer</th><th>Phone</th><th>Bundle</th>
+        <th>Price</th><th>Fee</th><th>Profit</th><th>Time</th>
       </tr>
     </thead>
-    <tbody id="transactionBody">
-      <tr><td>T001</td><td>John</td><td>0712345678</td><td>Daily 500MB</td><td>50</td><td>5</td><td>5</td><td>2025-10-29 12:00</td></tr>
-      <tr><td>T002</td><td>Amina</td><td>0798765432</td><td>Weekly 2GB</td><td>200</td><td>10</td><td>10</td><td>2025-10-29 12:10</td></tr>
-    </tbody>
+    <tbody id="txnBody"></tbody>
   </table>
 
-  <canvas id="bundlesChart" width="400" height="200"></canvas>
-  <canvas id="revenueChart" width="400" height="200"></canvas>
-</main>
+  <!-- Charts -->
+  <canvas id="salesChart" height="100"></canvas>
+  <canvas id="bundleChart" height="100"></canvas>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</div>
+
 <script>
-  // Dark mode
-  function toggleDarkMode() {
-    document.body.classList.toggle('dark');
+let transactions = [];
+
+// Auto-refresh every 30s
+setInterval(() => loadDashboard(), 30000);
+
+// Dark mode toggle
+document.getElementById("toggleMode").onclick = () => {
+  document.body.classList.toggle("dark");
+};
+
+// Logout
+function logout() {
+  localStorage.removeItem("rotcod_admin");
+  window.location.href = "login.html";
+}
+
+async function loadDashboard() {
+  try {
+    const res = await fetch("https://rotcod-backend.onrender.com/transactions");
+    transactions = await res.json();
+
+    updateTable();
+    updateStats();
+    updateCharts();
+  } catch (err) {
+    console.log("Error loading dashboard:", err);
   }
 
-  // Logout
-  function logout() {
-    localStorage.removeItem("rotcod_admin");
-    window.location.href = "login.html";
-  }
+  // Fetch float balance
+  try {
+    const fb = await fetch("https://rotcod-backend.onrender.com/float");
+    const balance = await fb.json();
+    document.getElementById("floatBalance").innerText = "$" + balance.amount;
+  } catch {}
+}
 
-  // Filter table
-  function filterTable() {
-    const filter = document.getElementById('searchInput').value.toLowerCase();
-    const rows = document.querySelectorAll('#transactionBody tr');
-    rows.forEach(row => {
-      row.style.display = [...row.cells].some(cell => cell.textContent.toLowerCase().includes(filter)) ? '' : 'none';
-    });
-  }
+function updateTable() {
+  const body = document.getElementById("txnBody");
+  body.innerHTML = "";
 
-  // Export to Excel
-  function exportToExcel() {
-    const table = document.getElementById('transactions');
-    const wb = XLSX.utils.table_to_book(table, {sheet: "Transactions"});
-    XLSX.writeFile(wb, "transactions.xlsx");
-  }
+  transactions.forEach(tx => {
+    body.innerHTML += `
+      <tr>
+        <td>${tx.id}</td>
+        <td>${tx.customer}</td>
+        <td>${tx.phone}</td>
+        <td>${tx.bundle}</td>
+        <td>${tx.price}</td>
+        <td>${tx.fee}</td>
+        <td>${tx.profit}</td>
+        <td>${tx.time}</td>
+      </tr>
+    `;
+  });
+}
 
-  // Charts
-  const bundlesCtx = document.getElementById('bundlesChart').getContext('2d');
-  const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+function updateStats() {
+  const totalSales = transactions.reduce((sum, t) => sum + t.price, 0);
+  const totalProfit = transactions.reduce((sum, t) => sum + t.profit, 0);
 
-  const bundlesChart = new Chart(bundlesCtx, {
-    type: 'bar',
-    data: {
-      labels: ['Daily 500MB','Weekly 2GB'],
-      datasets: [{
-        label: 'Bundles Sold',
-        data: [1,1],
-        backgroundColor: ['#1e40af','#2563eb']
-      }]
-    },
-    options: { responsive:true }
+  document.getElementById("totalSales").innerText = "$" + totalSales;
+  document.getElementById("totalProfit").innerText = "$" + totalProfit;
+  document.getElementById("bundleCount").innerText = transactions.length;
+  document.getElementById("txnCount").innerText = transactions.length;
+}
+
+function filterTable() {
+  const q = document.getElementById("search").value.toLowerCase();
+  const rows = document.querySelectorAll("#txnBody tr");
+
+  rows.forEach(r => {
+    r.style.display = r.innerText.toLowerCase().includes(q) ? "" : "none";
+  });
+}
+
+function exportExcel() {
+  let csv = "ID,Customer,Phone,Bundle,Price,Fee,Profit,Time\n";
+  transactions.forEach(t => {
+    csv += `${t.id},${t.customer},${t.phone},${t.bundle},${t.price},${t.fee},${t.profit},${t.time}\n`;
   });
 
-  const revenueChart = new Chart(revenueCtx, {
-    type: 'line',
+  const blob = new Blob([csv], { type: "text/csv" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "rotcod-transactions.csv";
+  link.click();
+}
+
+// CHART JS
+let salesChart, bundleChart;
+
+function updateCharts() {
+  const labels = transactions.map(t => t.time.slice(0, 10));
+  const sales = transactions.map(t => t.price);
+  const profit = transactions.map(t => t.profit);
+
+  // Destroy old charts
+  if (salesChart) salesChart.destroy();
+  if (bundleChart) bundleChart.destroy();
+
+  // Sales & Profit line chart
+  salesChart = new Chart(document.getElementById("salesChart"), {
+    type: "line",
     data: {
-      labels: ['2025-10-29 12:00','2025-10-29 12:10'],
-      datasets: [{
-        label:'Revenue',
-        data: [50,200],
-        borderColor:'#1e40af',
-        backgroundColor:'rgba(30,64,175,0.2)',
-        fill:true
-      },{
-        label:'Profit',
-        data:[5,10],
-        borderColor:'#2563eb',
-        backgroundColor:'rgba(37,99,235,0.2)',
-        fill:true
-      }]
-    },
-    options:{ responsive:true }
+      labels,
+      datasets: [
+        { label: "Sales", data: sales, borderWidth: 2 },
+        { label: "Profit", data: profit, borderWidth: 2 }
+      ]
+    }
   });
 
-  // Auto-refresh every 30s
-  setInterval(() => location.reload(), 30000);
+  // Bundles bar chart
+  bundleChart = new Chart(document.getElementById("bundleChart"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        { label: "Bundles Sold", data: sales.map(_ => 1), borderWidth: 2 }
+      ]
+    }
+  });
+}
+
+loadDashboard();
 </script>
-
-<!-- XLSX library for Export Excel -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 </body>
 </html>
